@@ -12,7 +12,7 @@ const upload = multer({ dest: "uploads/" });
 
 // Simple CORS configuration to allow all origins
 app.use(cors({ 
-  origin: '*',
+  origin: "https://medical-report-analyzer-uu5w.vercel.app",
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: false // Must be false when using origin: '*'
