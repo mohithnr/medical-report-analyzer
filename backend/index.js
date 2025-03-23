@@ -10,33 +10,14 @@ const path = require("path");
 const app = express();
 const upload = multer({ dest: "uploads/" });
 
-// Define allowed origins
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://medical-report-analyzer-uu5w.vercel.app'
-];
-
-// Configure CORS
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or Postman)
-    if (!origin) {
-      return callback(null, true);
-    }
-    
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('localhost')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+// Simple CORS configuration to allow all origins
+app.use(cors({ 
+  origin: '*',
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
+  credentials: false // Must be false when using origin: '*'
+}));
 
-app.use(cors(corsOptions));
 app.use(express.json());
 
 // Ensure directories exist
@@ -59,7 +40,7 @@ app.get('/health', (req, res) => {
     status: 'ok',
     origin: req.headers.origin,
     timestamp: new Date().toISOString(),
-    allowedOrigins
+   
   });
 });
 
@@ -160,5 +141,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log('Allowed origins:', allowedOrigins);
+
 });

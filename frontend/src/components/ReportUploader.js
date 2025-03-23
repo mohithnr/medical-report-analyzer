@@ -9,6 +9,7 @@ const ReportUploader = () => {
   const [language, setLanguage] = useState("English");
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
 
   useEffect(() => {
     const savedResponse = localStorage.getItem("response");
@@ -21,6 +22,16 @@ const ReportUploader = () => {
     if (response) {
       localStorage.setItem("response", JSON.stringify(response));
     }
+  }, [response]);
+
+  useEffect(() => {
+    const updatePdfUrl = async () => {
+      if (response && response.pdfPath) {
+        const apiUrl = await getApiUrl();
+        setPdfUrl(`${apiUrl}/${response.pdfPath}`);
+      }
+    };
+    updatePdfUrl();
   }, [response]);
 
   const checkLocalhost = async () => {
@@ -56,7 +67,8 @@ const ReportUploader = () => {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
-        withCredentials: true
+        // Remove withCredentials since we're using origin: '*'
+        withCredentials: false
       });
       setResponse(data);
     } catch (error) {
@@ -83,7 +95,8 @@ const ReportUploader = () => {
       const response = await axios({
         method: 'DELETE',
         url: `${apiUrl}/delete-files`,
-        withCredentials: true
+        // Remove withCredentials since we're using origin: '*'
+        withCredentials: false
       });
       
       if (response.status === 200) {
@@ -229,7 +242,7 @@ const ReportUploader = () => {
 
                 <motion.a
                   whileHover={{ scale: 1.05 }}
-                  href={`http://localhost:5000/${response.pdfPath}`}
+                  href={pdfUrl}
                   download
                   target="_blank"
                   rel="noopener noreferrer"
