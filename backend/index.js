@@ -12,12 +12,26 @@ const app = express();
 const upload = multer({ dest: "uploads/" });
 
 app.use(express.json());
+
+// Update CORS configuration
 app.use(cors({
   origin: ['http://localhost:3000', 'https://medical-report-analyzer-uu5w.vercel.app'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ['GET', 'POST', 'DELETE'],
-  credentials: true
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Origin',
+    'Accept'
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
+
+// Add OPTIONS handling for preflight requests
+app.options('*', cors());
+
 app.use("/pdfs", express.static(path.join(__dirname, "pdfs")));
 
 // Upload endpoint
