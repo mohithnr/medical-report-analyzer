@@ -13,13 +13,22 @@ const upload = multer({ dest: "uploads/" });
 
 app.use(express.json());
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://medical-report-analyzer-uu5w.vercel.app',
+  'https://medical-report-analyzer-seven.vercel.app'
+];
+
 // Update CORS configuration
 app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'https://medical-report-analyzer-uu5w.vercel.app',
-    'https://medical-report-analyzer-seven.vercel.app'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      return callback(new Error('CORS not allowed'));
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',
@@ -27,18 +36,26 @@ app.use(cors({
     'Origin',
     'Accept'
   ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
   credentials: true,
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 204,
+  preflightContinue: false
 }));
 
-// Add OPTIONS handling for preflight requests
-app.options('*', cors());
+// Handle preflight requests
+app.options('*', (req, res) => {
+  res.status(204).send();
+});
 
 app.use("/pdfs", express.static(path.join(__dirname, "pdfs")));
 
 // Add this before your other routes
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ 
+    status: 'ok',
+    origin: req.headers.origin,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Upload endpoint
@@ -75,30 +92,57 @@ app.post("/upload", upload.single("report"), async (req, res) => {
     res.status(500).json({ error: "An error occurred while processing the report." });
   }
 });
-// route to delete files
+// Update your delete-files route
 app.delete("/delete-files", async (req, res) => {
   try {
     const uploadsDir = path.join(__dirname, "uploads");
     const pdfsDir = path.join(__dirname, "pdfs");
 
-    // Delete all files in uploads folder
-    fs.readdirSync(uploadsDir).forEach((file) => {
-      fs.unlinkSync(path.join(uploadsDir, file));
+    // Ensure directories exist
+    [uploadsDir, pdfsDir].forEach(dir => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
     });
 
-    // Delete all files in pdfs folder
-    fs.readdirSync(pdfsDir).forEach((file) => {
-      fs.unlinkSync(path.join(pdfsDir, file));
-    });
+    // Delete files in uploads folder
+    if (fs.existsSync(uploadsDir)) {
+      fs.readdirSync(uploadsDir).forEach((file) => {
+        fs.unlinkSync(path.join(uploadsDir, file));
+      });
+    }
 
-    res.status(200).send({ message: "Files deleted successfully!" });
+    // Delete files in pdfs folder
+    if (fs.existsSync(pdfsDir)) {
+      fs.readdirSync(pdfsDir).forEach((file) => {
+        fs.unlinkSync(path.join(pdfsDir, file));
+      });
+    }
+
+    res.status(200).json({ message: "Files deleted successfully!" });
   } catch (error) {
     console.error("Error deleting files:", error);
-    res.status(500).send({ message: "Error deleting files." });
+    res.status(500).json({ 
+      error: "Error deleting files",
+      details: error.message 
+    });
   }
 });
 
-
+// Add this after all your routes but before app.listen
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  if (err.message === 'CORS not allowed') {
+    return res.status(403).json({
+      error: 'CORS not allowed',
+      origin: req.headers.origin
+    });
+  }
+  res.status(500).json({
+    error: 'Something went wrong!',
+    message: err.message
+  });
+});
 
 // Start server
 app.listen(5000, () => console.log("Server running on port 5000"));
