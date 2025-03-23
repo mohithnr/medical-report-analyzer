@@ -12,7 +12,11 @@ const app = express();
 const upload = multer({ dest: "uploads/" });
 
 app.use(express.json());
-app.use(cors({ origin: '*', credentials: true }));
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://your-frontend-domain.com'],
+  methods: ['GET', 'POST', 'DELETE'],
+  credentials: true
+}));
 app.use("/pdfs", express.static(path.join(__dirname, "pdfs")));
 
 // Upload endpoint

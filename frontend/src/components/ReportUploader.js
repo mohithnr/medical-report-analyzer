@@ -30,14 +30,34 @@ const ReportUploader = () => {
     formData.append("report", file);
     formData.append("language", language);
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
     try {
-      const { data } = await axios.post("http://localhost:5000/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const { data } = await axios.post(`${apiUrl}/upload`, formData, {
+        headers: { 
+          "Content-Type": "multipart/form-data",
+          "Accept": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        },
+        withCredentials: false // Important for cross-origin requests
       });
       setResponse(data);
     } catch (error) {
-      console.error(error);
-      alert("Error processing the report.");
+      console.error("Upload error details:", error);
+      let errorMessage = "Error processing the report. ";
+      
+      if (error.response) {
+        // Server responded with error
+        errorMessage += `Server error: ${error.response.status}`;
+      } else if (error.request) {
+        // Request made but no response
+        errorMessage += "No response from server. Check your internet connection.";
+      } else {
+        // Other errors
+        errorMessage += error.message;
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
