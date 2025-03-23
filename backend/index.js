@@ -15,7 +15,11 @@ app.use(express.json());
 
 // Update CORS configuration
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://medical-report-analyzer-uu5w.vercel.app'],
+  origin: [
+    'http://localhost:3000', 
+    'https://medical-report-analyzer-uu5w.vercel.app',
+    'https://medical-report-analyzer-seven.vercel.app'
+  ],
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',
@@ -23,9 +27,7 @@ app.use(cors({
     'Origin',
     'Accept'
   ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
   credentials: true,
-  preflightContinue: false,
   optionsSuccessStatus: 204
 }));
 
@@ -33,6 +35,11 @@ app.use(cors({
 app.options('*', cors());
 
 app.use("/pdfs", express.static(path.join(__dirname, "pdfs")));
+
+// Add this before your other routes
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 // Upload endpoint
 app.post("/upload", upload.single("report"), async (req, res) => {

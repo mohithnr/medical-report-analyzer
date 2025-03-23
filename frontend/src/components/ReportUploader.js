@@ -23,16 +23,32 @@ const ReportUploader = () => {
     }
   }, [response]);
 
+  const checkLocalhost = async () => {
+    try {
+      await axios.get('http://localhost:5000/health');
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const getApiUrl = async () => {
+    const isLocalhostAvailable = await checkLocalhost();
+    return isLocalhostAvailable 
+      ? 'http://localhost:5000'
+      : 'https://medical-report-analyzer-seven.vercel.app';
+  };
+
   const handleUpload = async () => {
     if (!file) return alert("Please select a file!");
     setLoading(true);
+    
     const formData = new FormData();
     formData.append("report", file);
     formData.append("language", language);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
     try {
+      const apiUrl = await getApiUrl();
       const { data } = await axios.post(`${apiUrl}/upload`, formData, {
         headers: { 
           'Content-Type': 'multipart/form-data'
@@ -60,15 +76,17 @@ const ReportUploader = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete("http://localhost:5000/delete-files");
-      alert("Add valid files!");
+      const apiUrl = await getApiUrl();
+      await axios.delete(`${apiUrl}/delete-files`, {
+        withCredentials: false
+      });
       localStorage.removeItem("response");
       setResponse(null);
       setFile(null);
       setLanguage("English");
     } catch (error) {
-      console.error(error);
-      alert("Error deleting files.");
+      console.error("Delete error:", error);
+      alert("Error deleting files. Please try again.");
     }
   };
 
