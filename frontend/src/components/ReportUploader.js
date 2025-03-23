@@ -35,29 +35,14 @@ const ReportUploader = () => {
     try {
       const { data } = await axios.post(`${apiUrl}/upload`, formData, {
         headers: { 
-          "Content-Type": "multipart/form-data",
-          "Accept": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          'Content-Type': 'multipart/form-data'
         },
-        withCredentials: false // Important for cross-origin requests
+        withCredentials: false
       });
       setResponse(data);
     } catch (error) {
       console.error("Upload error details:", error);
-      let errorMessage = "Error processing the report. ";
-      
-      if (error.response) {
-        // Server responded with error
-        errorMessage += `Server error: ${error.response.status}`;
-      } else if (error.request) {
-        // Request made but no response
-        errorMessage += "No response from server. Check your internet connection.";
-      } else {
-        // Other errors
-        errorMessage += error.message;
-      }
-      
-      alert(errorMessage);
+      alert("Error processing the report. Please try again.");
     } finally {
       setLoading(false);
     }
