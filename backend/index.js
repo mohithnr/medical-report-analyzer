@@ -13,7 +13,7 @@ const upload = multer({ dest: "uploads/" });
 
 app.use(express.json());
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://your-frontend-domain.com'],
+  origin: ['http://localhost:3000', 'https://medical-report-analyzer-uu5w.vercel.app/'],
   methods: ['GET', 'POST', 'DELETE'],
   credentials: true
 }));
