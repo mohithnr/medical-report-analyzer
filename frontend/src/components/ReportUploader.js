@@ -49,16 +49,19 @@ const ReportUploader = () => {
 
     try {
       const apiUrl = await getApiUrl();
-      const { data } = await axios.post(`${apiUrl}/upload`, formData, {
-        headers: { 
+      const { data } = await axios({
+        method: 'POST',
+        url: `${apiUrl}/upload`,
+        data: formData,
+        headers: {
           'Content-Type': 'multipart/form-data'
         },
-        withCredentials: false
+        withCredentials: true
       });
       setResponse(data);
     } catch (error) {
-      console.error("Upload error details:", error);
-      alert("Error processing the report. Please try again.");
+      console.error("Upload error:", error);
+      alert(`Error: ${error.response?.data?.error || "Failed to process report"}`);
     } finally {
       setLoading(false);
     }
@@ -77,16 +80,21 @@ const ReportUploader = () => {
   const handleDelete = async () => {
     try {
       const apiUrl = await getApiUrl();
-      await axios.delete(`${apiUrl}/delete-files`, {
-        withCredentials: false
+      const response = await axios({
+        method: 'DELETE',
+        url: `${apiUrl}/delete-files`,
+        withCredentials: true
       });
-      localStorage.removeItem("response");
-      setResponse(null);
-      setFile(null);
-      setLanguage("English");
+      
+      if (response.status === 200) {
+        localStorage.removeItem("response");
+        setResponse(null);
+        setFile(null);
+        setLanguage("English");
+      }
     } catch (error) {
       console.error("Delete error:", error);
-      alert("Error deleting files. Please try again.");
+      alert(`Error: ${error.response?.data?.error || "Failed to delete files"}`);
     }
   };
 

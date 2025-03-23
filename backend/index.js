@@ -7,54 +7,59 @@ const fs = require("fs");
 const cors = require('cors');
 const path = require("path");
 
-
 const app = express();
 const upload = multer({ dest: "uploads/" });
 
-app.use(express.json());
-
+// Define allowed origins
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://medical-report-analyzer-uu5w.vercel.app',
-  'https://medical-report-analyzer-seven.vercel.app'
+  'https://medical-report-analyzer-uu5w.vercel.app'
 ];
 
-// Update CORS configuration
-app.use(cors({
+// Configure CORS
+const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(new Error('CORS not allowed'));
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) {
+      return callback(null, true);
     }
-    return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('localhost')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'Origin',
-    'Accept'
-  ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  optionsSuccessStatus: 204,
-  preflightContinue: false
-}));
+  optionsSuccessStatus: 200
+};
 
-// Handle preflight requests
-app.options('*', (req, res) => {
-  res.status(204).send();
-});
+app.use(cors(corsOptions));
+app.use(express.json());
+
+// Ensure directories exist
+const ensureDirectories = () => {
+  ['uploads', 'pdfs'].forEach(dir => {
+    const dirPath = path.join(__dirname, dir);
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+  });
+};
+
+ensureDirectories();
 
 app.use("/pdfs", express.static(path.join(__dirname, "pdfs")));
 
-// Add this before your other routes
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok',
     origin: req.headers.origin,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    allowedOrigins
   });
 });
 
@@ -88,12 +93,18 @@ app.post("/upload", upload.single("report"), async (req, res) => {
     // Clean up uploaded file
     fs.unlinkSync(req.file.path);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "An error occurred while processing the report." });
+    console.error('Upload error:', error);
+    res.status(500).json({ 
+      error: "An error occurred while processing the report.",
+      details: error.message
+    });
   }
 });
-// Update your delete-files route
+
+// Delete files endpoint
 app.delete("/delete-files", async (req, res) => {
+  console.log('Delete request received from:', req.headers.origin);
+  
   try {
     const uploadsDir = path.join(__dirname, "uploads");
     const pdfsDir = path.join(__dirname, "pdfs");
@@ -121,28 +132,33 @@ app.delete("/delete-files", async (req, res) => {
 
     res.status(200).json({ message: "Files deleted successfully!" });
   } catch (error) {
-    console.error("Error deleting files:", error);
+    console.error('Delete error:', error);
     res.status(500).json({ 
       error: "Error deleting files",
-      details: error.message 
+      details: error.message
     });
   }
 });
 
-// Add this after all your routes but before app.listen
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  if (err.message === 'CORS not allowed') {
+  console.error('Global error:', err);
+  if (err.message === 'Not allowed by CORS') {
     return res.status(403).json({
-      error: 'CORS not allowed',
+      error: 'CORS error',
+      message: 'Origin not allowed',
       origin: req.headers.origin
     });
   }
   res.status(500).json({
-    error: 'Something went wrong!',
+    error: 'Server error',
     message: err.message
   });
 });
 
 // Start server
-app.listen(5000, () => console.log("Server running on port 5000"));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log('Allowed origins:', allowedOrigins);
+});
