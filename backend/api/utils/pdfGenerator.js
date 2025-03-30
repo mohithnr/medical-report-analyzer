@@ -12,8 +12,9 @@ const parseSummary = (summary) => {
   }
 };
 
-const generatePDF = async ({ text, abnormalities, recommendations, language }) => {
-  const pdfPath = `pdfs/report_${Date.now()}.pdf`;
+// Update PDF generator to return buffer
+const generatePDF = async (data) => {
+  const { text, abnormalities, recommendations, language } = data;
   const parsedSummary = text ? parseSummary(text) : null;
 
   // Update the path to the correct font file
@@ -21,7 +22,12 @@ const generatePDF = async ({ text, abnormalities, recommendations, language }) =
   const notoRegularFontPath = path.join(__dirname, '..', 'fonts', 'Noto_Sans', 'static', 'NotoSans-Regular.ttf');
 
   const doc = new PDFDocument();
-  doc.pipe(fs.createWriteStream(pdfPath));
+  const buffers = [];
+  doc.on('data', buffers.push.bind(buffers));
+  doc.on('end', () => {
+    const pdfData = Buffer.concat(buffers);
+    return pdfData;
+  });
 
   // Add header
   doc.fontSize(16).text("Medical Report Analysis", { align: "center" }).moveDown();
@@ -38,7 +44,6 @@ const generatePDF = async ({ text, abnormalities, recommendations, language }) =
     doc.fontSize(12).text("No valid summary available.").moveDown();
   }
   doc.end();
-  return pdfPath;
 };
 
 module.exports = { generatePDF };

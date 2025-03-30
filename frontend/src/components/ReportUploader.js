@@ -75,7 +75,18 @@ const ReportUploader = () => {
         },
         withCredentials: false
       });
+
       setResponse(data);
+      
+      // Handle PDF download from base64
+      if (data.pdfData) {
+        const blob = new Blob(
+          [Buffer.from(data.pdfData, 'base64')], 
+          { type: 'application/pdf' }
+        );
+        const pdfUrl = URL.createObjectURL(blob);
+        setPdfUrl(pdfUrl);
+      }
     } catch (error) {
       console.error("Upload error:", error);
       alert(`Error: ${error.response?.data?.error || "Failed to process report"}`);
