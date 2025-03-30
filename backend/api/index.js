@@ -21,7 +21,12 @@ app.use(cors({
 
 app.use(express.json());
 
-// Add API prefix to all routes
+// Base route
+app.get('/api', (req, res) => {
+  res.json({ message: 'Medical Report Analyzer API' });
+});
+
+// Health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
@@ -69,8 +74,8 @@ app.delete("/api/delete-files", (req, res) => {
   res.status(200).json({ message: "Operation completed" });
 });
 
-// Add catch-all route
-app.get("*", (req, res) => {
+// 404 handler
+app.use((req, res) => {
   res.status(404).json({ 
     error: "Not Found",
     path: req.path
