@@ -44,10 +44,16 @@ const ReportUploader = () => {
   };
 
   const getApiUrl = async () => {
-    const isLocalhostAvailable = await checkLocalhost();
-    return isLocalhostAvailable 
-      ? 'http://localhost:5000'
-      : 'https://medical-report-analyzer-seven.vercel.app';
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        await axios.get('http://localhost:5000/health');
+        return 'http://localhost:5000';
+      } catch (error) {
+        console.log('Localhost not available, using production API');
+        return 'https://medical-report-analyzer-seven.vercel.app/api';
+      }
+    }
+    return 'https://medical-report-analyzer-seven.vercel.app/api';
   };
 
   const handleUpload = async () => {
@@ -67,7 +73,6 @@ const ReportUploader = () => {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
-        // Remove withCredentials since we're using origin: '*'
         withCredentials: false
       });
       setResponse(data);
@@ -95,7 +100,6 @@ const ReportUploader = () => {
       const response = await axios({
         method: 'DELETE',
         url: `${apiUrl}/delete-files`,
-        // Remove withCredentials since we're using origin: '*'
         withCredentials: false
       });
       

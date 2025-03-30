@@ -10,12 +10,12 @@ const path = require("path");
 const app = express();
 const upload = multer({ dest: "uploads/" });
 
-// Simple CORS configuration to allow all origins
+// CORS configuration
 app.use(cors({ 
-  origin: "https://medical-report-analyzer-uu5w.vercel.app",
+  origin: '*',
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false // Must be false when using origin: '*'
+  credentials: false
 }));
 
 app.use(express.json());
@@ -137,9 +137,5 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-
-});
+// Export the app instead of starting the server
+module.exports = app;
