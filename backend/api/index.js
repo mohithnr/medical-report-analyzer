@@ -7,10 +7,11 @@ const cors = require('cors');
 
 const app = express();
 
-// Configure multer to use memory storage instead of disk storage
+// Use memory storage for Vercel
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+// CORS configuration
 app.use(cors({ 
   origin: '*',
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
@@ -20,12 +21,13 @@ app.use(cors({
 
 app.use(express.json());
 
-app.get("/health", (req, res) => {
+// Add API prefix to all routes
+app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 // Modified upload endpoint to work with memory storage
-app.post("/upload", upload.single("report"), async (req, res) => {
+app.post("/api/upload", upload.single("report"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
@@ -63,8 +65,16 @@ app.post("/upload", upload.single("report"), async (req, res) => {
 });
 
 // Remove file system operations
-app.delete("/delete-files", (req, res) => {
+app.delete("/api/delete-files", (req, res) => {
   res.status(200).json({ message: "Operation completed" });
+});
+
+// Add catch-all route
+app.get("*", (req, res) => {
+  res.status(404).json({ 
+    error: "Not Found",
+    path: req.path
+  });
 });
 
 // Error handling middleware

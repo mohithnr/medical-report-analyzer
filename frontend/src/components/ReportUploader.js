@@ -46,14 +46,14 @@ const ReportUploader = () => {
   const getApiUrl = async () => {
     if (process.env.NODE_ENV === 'development') {
       try {
-        await axios.get('http://localhost:5000/health');
-        return 'http://localhost:5000';
+        await axios.get('http://localhost:5000/api/health');
+        return 'http://localhost:5000/api';
       } catch (error) {
         console.log('Localhost not available, using production API');
-        return 'https://medical-report-analyzer-seven.vercel.app/api';
+        return 'https://medical-report-analyzer-pt2hg80cz-mohith-n-rs-projects.vercel.app/api';
       }
     }
-    return 'https://medical-report-analyzer-seven.vercel.app/api';
+    return 'https://medical-report-analyzer-pt2hg80cz-mohith-n-rs-projects.vercel.app/api';
   };
 
   const handleUpload = async () => {
