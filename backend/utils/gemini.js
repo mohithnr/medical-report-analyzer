@@ -5,7 +5,7 @@ const processHealthReportWithGemini = async (extractedText, language) => {
     const genAI = new GoogleGenerativeAI("AIzaSyCZfsorcLmb9R2S9eQUnBg_t8qj-zAykec"); // Replace with your actual API key
 
     const model = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+    console.log("Extracted Text in gemini:", extractedText);
     const prompt = `
   Summarize the following medical report in ${language}. Ensure the summary includes:
   - Key findings,
@@ -14,7 +14,7 @@ const processHealthReportWithGemini = async (extractedText, language) => {
   - Relevant health advice or follow-up actions.
   
   Medical Report:
-  ${extractedText}
+  ${extractedText.rawText}
   
   Please respond in the following structured JSON format:
   {
