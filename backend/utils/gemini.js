@@ -2,10 +2,9 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const processHealthReportWithGemini = async (extractedText, language) => {
   try {
-    const genAI = new GoogleGenerativeAI("AIzaSyCZfsorcLmb9R2S9eQUnBg_t8qj-zAykec"); // Replace with your actual API key
-
+    const genAI = new GoogleGenerativeAI("AIzaSyCZfsorcLmb9R2S9eQUnBg_t8qj-zAykec");
     const model = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    console.log("Extracted Text in gemini:", extractedText);
+
     const prompt = `
   Summarize the following medical report in ${language}. Ensure the summary includes:
   - Key findings,
@@ -31,15 +30,53 @@ const processHealthReportWithGemini = async (extractedText, language) => {
     "healthAdvice": "General health advice or follow-ups."
   }
 `;
-    const result = await model.generateContent(prompt);
 
+    const result = await model.generateContent(prompt);
     const responseContent = result?.response?.text() || "No response provided";
 
-    console.log("Extracted Summary:", responseContent);
+    // Parse and validate the response
+    const parseResponse = (content) => {
+      try {
+        // Clean up the response text (remove markdown if present)
+        const cleanContent = content.replace(/```json\s*|\s*```/g, '').trim();
+        const parsed = JSON.parse(cleanContent);
+
+        // Validate and structure the response
+        return {
+          keyFindings: typeof parsed.keyFindings === 'string' ? parsed.keyFindings.trim() : '',
+          abnormalities: Array.isArray(parsed.abnormalities) ? 
+            parsed.abnormalities.map(item => ({
+              test: (item.test || '').trim(),
+              result: (item.result || '').trim(),
+              normalRange: (item.normalRange || '').trim(),
+              abnormality: (item.abnormality || '').trim()
+            })) : [],
+          recommendedSteps: typeof parsed.recommendedSteps === 'string' ? parsed.recommendedSteps.trim() : '',
+          healthAdvice: typeof parsed.healthAdvice === 'string' ? parsed.healthAdvice.trim() : ''
+        };
+      } catch (parseError) {
+        console.error("Error parsing Gemini response:", parseError);
+        throw new Error("Failed to parse medical report summary");
+      }
+    };
+
+    // Parse and validate the response
+    const parsedSummary = parseResponse(responseContent);
+    
+    console.log("Parsed Summary:", parsedSummary.keyFindings);
+
+    // Validate the parsed summary has content
+    if (!parsedSummary.keyFindings && 
+        !parsedSummary.abnormalities.length && 
+        !parsedSummary.recommendedSteps && 
+        !parsedSummary.healthAdvice) {
+      throw new Error("Generated summary is empty or invalid");
+    }
 
     return {
-      summary: responseContent,
+      summary: parsedSummary // Send structured object instead of raw text
     };
+
   } catch (error) {
     console.error("Error generating content with Gemini API:", error.message);
     throw error;

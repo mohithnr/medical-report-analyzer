@@ -54,7 +54,7 @@ app.get('/health', (req, res) => {
 });
 
 // Upload endpoint
-app.post("/upload", upload.single("report"), async (req, res) => {
+app.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
@@ -62,7 +62,7 @@ app.post("/upload", upload.single("report"), async (req, res) => {
 
     const extractedText = await extractTextFromImage(req.file.path);
     const result = await processHealthReportWithGemini(extractedText, req.body.language);
-
+    console.log("Gemini result:", result);
     // Generate PDF and get the buffer
     const pdfBuffer = await generatePDF({
       summary: result.summary,
