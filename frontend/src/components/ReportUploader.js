@@ -5,6 +5,7 @@ import { Buffer } from 'buffer'; // Add this import
 import { textToSpeech, cleanupAudioUrl } from '../components/Sarvam';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import Chatbot from './Chatbot';
 
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -556,6 +557,9 @@ const ReportUploader = () => {
             </div>
           )}
         </div>
+        {response && parsedSummary && (
+          <Chatbot parsedSummary={parsedSummary} />
+        )}
       </motion.div>
 
       <audio 
