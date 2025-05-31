@@ -80,6 +80,7 @@ const ReportUploader = () => {
   const [currentSection, setCurrentSection] = useState(null);
   const [audioQueue, setAudioQueue] = useState([]);
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
+  const [isOpen, setIsOpen] = useState(false); // Add isOpen state
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -558,7 +559,7 @@ const ReportUploader = () => {
           )}
         </div>
         {response && parsedSummary && (
-          <Chatbot parsedSummary={parsedSummary} />
+          <Chatbot parsedSummary={parsedSummary} isOpen={isOpen} setIsOpen={setIsOpen} />
         )}
       </motion.div>
 
@@ -572,6 +573,19 @@ const ReportUploader = () => {
       />
       {!loading && response && parsedSummary && (
         <>
+          {/* Add Chatbot Icon Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsOpen(true)} // You'll need to add isOpen state
+            className="p-2 rounded-full bg-emerald-500 text-white hover:bg-emerald-600 fixed bottom-24 right-8 z-50 w-12 h-12 flex items-center justify-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+          </motion.button>
+
+          {/* Existing Speaker Button */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -581,6 +595,8 @@ const ReportUploader = () => {
           >
             {isPlaying ? <LoadingSpinner /> : <SpeakerIcon />}
           </motion.button>
+
+          {/* Existing Stop Button */}
           {isPlaying && (
             <motion.button
               whileHover={{ scale: 1.05 }}
