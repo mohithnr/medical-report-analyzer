@@ -1,28 +1,21 @@
 const Tesseract = require('tesseract.js');
 const { createWorker } = Tesseract;
 
-async function extractTextFromImage(imagePath) {
+async function extractTextFromImage(buffer) {
     try {
-        // Create a new worker
         const worker = await createWorker('eng');
-
-        // Recognize text from image
-        const { data: { text } } = await worker.recognize(imagePath);
-
-        // Terminate worker
+        const { data: { text } } = await worker.recognize(buffer);
         await worker.terminate();
 
-        // Clean and format the extracted text
         const cleanedText = text
-            .replace(/\n+/g, ' ')          // Replace multiple newlines with space
-            .replace(/\s+/g, ' ')          // Replace multiple spaces with single space
-            .replace(/[^\x00-\x7F]/g, '')  // Remove non-ASCII characters
-            .trim();                        // Remove leading/trailing whitespace
+            .replace(/\n+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .replace(/[^\x00-\x7F]/g, '')
+            .trim();
 
-        // Extract test results
         const results = parseTestResults(cleanedText);
-
         return results;
+
     } catch (error) {
         console.error('OCR Error:', error);
         throw new Error(`Failed to extract text from image: ${error.message}`);
@@ -31,7 +24,6 @@ async function extractTextFromImage(imagePath) {
 
 function parseTestResults(text) {
     try {
-        // Regular expression to match test patterns
         const testPattern = /([A-Za-z\s,]+):\s*([\d.]+)\s*([A-Za-z/%]+)\s*\((?:Reference Range|Normal Range|Range):\s*([\d.-]+)\s*(?:to|-)?\s*([\d.]+)\s*([A-Za-z/%]+)\)/g;
         
         let matches;

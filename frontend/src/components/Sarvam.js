@@ -1,8 +1,10 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
-const API_KEY ="39dab854-4d6e-459d-9630-75142f865feb";
-// console.log(API_KEY);
+// const API_KEY ="39dab854-4d6e-459d-9630-75142f865feb";
+
+const API_KEY =process.env.REACT_APP_SARVAM_API_KEY;
+// console.log( 'inside servam',API_KEY);
 
 // Create API client with retry logic
 const sarvamClient = axios.create({

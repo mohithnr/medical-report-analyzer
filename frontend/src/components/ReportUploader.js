@@ -10,7 +10,9 @@ import Chatbot from './Chatbot';
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 const imagepath = "/hrp project image.webp";
-
+// Environment variables configuration
+// 
+// console.log("env", API_URL);
 const chunkText = (text, maxLen = 500) => {
   const chunks = [];
   let start = 0;
@@ -141,20 +143,23 @@ const ReportUploader = () => {
     }
   }, [currentAudioIndex]);
 
+  // Update the checkLocalhost function
   const checkLocalhost = async () => {
     try {
-      await axios.get('http://localhost:5000/health');
+      await axios.get(`${process.env.REACT_APP_BACKEND_URL}/health`);
       return true;
     } catch (error) {
       return false;
     }
   };
 
-  const getApiUrl = async () => {
-    const isLocalhostAvailable = await checkLocalhost();
-    return isLocalhostAvailable 
-      ? 'http://localhost:5000'
-      : 'https://medical-report-analyzer-seven.vercel.app';
+  // Update the getApiUrl function
+  const getApiUrl = () => {
+    const API_URL = process.env.REACT_APP_BACKEND_URL;
+    if (!API_URL) {
+      console.warn('Backend URL not found in environment variables, using default');
+    }
+    return API_URL;
   };
 
   const isValidSummary = (summary) => {
@@ -171,6 +176,7 @@ const ReportUploader = () => {
     }
   };
 
+  // Update the handleUpload function
   const handleUpload = async () => {
     if (!file) {
       alert('Please select a file to upload');
@@ -183,7 +189,7 @@ const ReportUploader = () => {
     formData.append('language', language);
   
     try {
-      const apiUrl = await getApiUrl();
+      const apiUrl =process.env.REACT_APP_BACKEND_URL;
       const { data } = await axios({
         method: 'POST',
         url: `${apiUrl}/upload`,
@@ -223,9 +229,10 @@ const ReportUploader = () => {
     }
   };
 
+  // Update the handleDelete function
   const handleDelete = async () => {
     try {
-      const apiUrl = await getApiUrl();
+      const apiUrl = process.env.REACT_APP_BACKEND_URL;
       const response = await axios({
         method: 'DELETE',
         url: `${apiUrl}/delete-files`,

@@ -21,8 +21,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// CORS configuration for local development
-app.use(cors({ 
+// CORS configuration
+app.use(cors({
   origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -31,7 +31,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// Ensure directories exist
+// Ensure required directories exist
 const ensureDirectories = () => {
   ['uploads', 'pdfs'].forEach(dir => {
     if (!fs.existsSync(dir)) {
@@ -47,7 +47,7 @@ app.use("/pdfs", express.static("pdfs"));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'ok',
     timestamp: new Date().toISOString()
   });
@@ -55,44 +55,39 @@ app.get('/health', (req, res) => {
 
 // Upload endpoint
 app.post("/upload", upload.single("file"), async (req, res) => {
+  const uploadedPath = req.file?.path;
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const extractedText = await extractTextFromImage(req.file.path);
+    const extractedText = await extractTextFromImage(uploadedPath);
     const result = await processHealthReportWithGemini(extractedText, req.body.language);
-    console.log("Gemini result:", result);
-    // Generate PDF and get the buffer
-    const pdfBuffer = await generatePDF({
-      summary: result.summary,
+
+    const summaryPayload = {
+      keyFindings: result.summary,
       abnormalities: result.abnormalities,
-      recommendations: result.recommendations,
-      healthAdvice: result.healthAdvice
-    });
+      recommendedSteps: result.recommendations,
+      healthAdvice: result.healthAdvice || ''
+    };
 
-    // Clean up uploaded file
-    fs.unlinkSync(req.file.path);
+    const pdfBuffer = await generatePDF({ summary: summaryPayload });
 
-    // Send response with base64 encoded PDF
-    res.json({ 
-      summary: {
-        keyFindings: result.summary,
-        abnormalities: result.abnormalities,
-        recommendedSteps: result.recommendations,
-        healthAdvice: result.healthAdvice || ''
-      },
+    if (fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath);
+
+    res.json({
+      summary: summaryPayload,
       pdfData: pdfBuffer.toString('base64')
     });
 
   } catch (error) {
     console.error("Error processing report:", error);
-    if (req.file) {
-      fs.unlinkSync(req.file.path);
+    if (uploadedPath && fs.existsSync(uploadedPath)) {
+      fs.unlinkSync(uploadedPath);
     }
-    res.status(500).json({ 
-      error: "Error processing report", 
-      details: error.message 
+    res.status(500).json({
+      error: "Error processing report",
+      details: error.message
     });
   }
 });
@@ -103,7 +98,8 @@ app.delete("/delete-files", (req, res) => {
     ['uploads', 'pdfs'].forEach(dir => {
       if (fs.existsSync(dir)) {
         fs.readdirSync(dir).forEach(file => {
-          fs.unlinkSync(path.join(dir, file));
+          const filePath = path.join(dir, file);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
         });
       }
     });

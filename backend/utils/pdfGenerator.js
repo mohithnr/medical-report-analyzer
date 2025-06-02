@@ -8,11 +8,11 @@ async function generatePDF(data) {
 
       doc.on('data', chunk => chunks.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
-
+      console.log("IN PDF GEN",data.summary.keyFindings);
       // Parse data if it's still in JSON format
-      const parsedData = typeof data.summary === 'string' 
-        ? JSON.parse(data.summary.replace(/```json|```/g, '').trim())
-        : data.summary;
+      const parsedData = typeof data.summary.keyFindings === 'string' 
+        ? JSON.parse(data.summary.keyFindings.replace(/```json|```/g, '').trim())
+        : data.summary.keyFindings;
 
       // Title
       doc.font('Helvetica-Bold')
