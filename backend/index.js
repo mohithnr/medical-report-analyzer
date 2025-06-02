@@ -9,21 +9,13 @@ const path = require("path");
 
 const app = express();
 
-// Configure multer with disk storage for local development
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
+// Configure multer with memory storage for Vercel compatibility
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // CORS configuration
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: false
@@ -31,37 +23,16 @@ app.use(cors({
 
 app.use(express.json());
 
-// Ensure required directories exist
-const ensureDirectories = () => {
-  ['uploads', 'pdfs'].forEach(dir => {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-  });
-};
-
-ensureDirectories();
-
-// Serve PDFs statically
-app.use("/pdfs", express.static("pdfs"));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Upload endpoint
+// Upload endpoint - modified to work with memory storage
 app.post("/upload", upload.single("file"), async (req, res) => {
-  const uploadedPath = req.file?.path;
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const extractedText = await extractTextFromImage(uploadedPath);
+    // Use buffer instead of file path
+    const fileBuffer = req.file.buffer;
+    const extractedText = await extractTextFromImage(fileBuffer);
     const result = await processHealthReportWithGemini(extractedText, req.body.language);
 
     const summaryPayload = {
@@ -73,8 +44,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     const pdfBuffer = await generatePDF({ summary: summaryPayload });
 
-    if (fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath);
-
     res.json({
       summary: summaryPayload,
       pdfData: pdfBuffer.toString('base64')
@@ -82,9 +51,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
   } catch (error) {
     console.error("Error processing report:", error);
-    if (uploadedPath && fs.existsSync(uploadedPath)) {
-      fs.unlinkSync(uploadedPath);
-    }
     res.status(500).json({
       error: "Error processing report",
       details: error.message

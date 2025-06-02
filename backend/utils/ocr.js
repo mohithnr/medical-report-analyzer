@@ -1,25 +1,27 @@
 const Tesseract = require('tesseract.js');
 const { createWorker } = Tesseract;
 
-async function extractTextFromImage(buffer) {
-    try {
-        const worker = await createWorker('eng');
-        const { data: { text } } = await worker.recognize(buffer);
-        await worker.terminate();
+const extractTextFromImage = async (fileBuffer) => {
+  try {
+    const worker = await createWorker('eng');
+    const { data: { text } } = await worker.recognize(fileBuffer);
+    await worker.terminate();
 
-        const cleanedText = text
-            .replace(/\n+/g, ' ')
-            .replace(/\s+/g, ' ')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
+    const cleanedText = text
+      .replace(/\n+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/[^\x00-\x7F]/g, '')
+      .trim();
 
-        const results = parseTestResults(cleanedText);
-        return results;
+    const results = parseTestResults(cleanedText);
+    return {
+      rawText: cleanedText,
+      parsedResults: results
+    };
 
-    } catch (error) {
-        console.error('OCR Error:', error);
-        throw new Error(`Failed to extract text from image: ${error.message}`);
-    }
+  } catch (error) {
+    throw new Error(`Failed to extract text: ${error.message}`);
+  }
 }
 
 function parseTestResults(text) {
