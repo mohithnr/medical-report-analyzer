@@ -1,8 +1,16 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+require('dotenv').config();
+
+// Get API key from environment variables with validation
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+if (!GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY is not defined in environment variables');
+}
 
 const processHealthReportWithGemini = async (extractedText, language) => {
   try {
-    const genAI = new GoogleGenerativeAI("AIzaSyCZfsorcLmb9R2S9eQUnBg_t8qj-zAykec");
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     const model = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
