@@ -1,10 +1,7 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
-// const API_KEY ="39dab854-4d6e-459d-9630-75142f865feb";
-
-const API_KEY =process.env.REACT_APP_SARVAM_API_KEY;
-// console.log( 'inside servam',API_KEY);
+const API_KEY = process.env.REACT_APP_SARVAM_API_KEY;
 
 // Create API client with retry logic
 const sarvamClient = axios.create({
@@ -27,7 +24,6 @@ axiosRetry(sarvamClient, {
 
 // Language code mapping
 const getLanguageCode = (language) => {
-  console.log('Language:', language); // Debug log
   const languageMap = {
     'english': 'en-IN',
     'hindi': 'hi-IN',
@@ -42,25 +38,23 @@ const getLanguageCode = (language) => {
 export const textToSpeech = async (text, language = 'english') => {
   try {
     // Clean and prepare the text
-    const cleanedText = text
+    const processedText = text
       .replace(/[^\w\s.,]/g, ' ') // Replace special characters with spaces
       .replace(/\s+/g, ' ')       // Normalize spaces
       .trim()
       .slice(0, 1000);            // Limit text length to 1000 characters
-    console.log('Cleaned text:', text); // Debug log
+
     const requestData = {
       speaker: "amol",
-      pitch: 0,                   // Changed to 0
-      pace: 1,                 // Changed to 1.65
-      loudness: 1,             // Changed to 1.55
-      speech_sample_rate: 22050,   // Changed to 8000
-      enable_preprocessing: false, // Changed to false
-      inputs: [text],
+      pitch: 0,
+      pace: 1,
+      loudness: 1,
+      speech_sample_rate: 22050,
+      enable_preprocessing: false,
+      inputs: [processedText],
       target_language_code: getLanguageCode(language),
       model: "bulbul:v1"
     };
-
-    console.log('Request payload:', requestData); // Debug log
 
     const response = await sarvamClient.post('/text-to-speech', requestData);
 
@@ -76,7 +70,6 @@ export const textToSpeech = async (text, language = 'english') => {
     throw new Error('No audio data received');
   } catch (error) {
     console.error('Sarvam AI TTS Error:', error);
-    console.error('Response data:', error.response?.data); // Debug log
     
     if (error.response?.status === 400) {
       throw new Error(`Invalid request: ${error.response?.data?.message || 'Text format not supported'}`);
@@ -95,7 +88,3 @@ export const cleanupAudioUrl = (url) => {
     URL.revokeObjectURL(url);
   }
 };
-
-
-
-// {"speaker":"meera","pitch":0,"pace":1,"loudness":1,"speech_sample_rate":22050,"enable_preprocessing":false}'

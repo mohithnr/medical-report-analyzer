@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { Buffer } from 'buffer'; // Add this import
+
 import { textToSpeech, cleanupAudioUrl } from '../components/Sarvam';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
@@ -9,10 +9,6 @@ import Chatbot from './Chatbot';
 
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const imagepath = "/hrp project image.webp";
-// Environment variables configuration
-// 
-// console.log("env", API_URL);
 const chunkText = (text, maxLen = 500) => {
   const chunks = [];
   let start = 0;
