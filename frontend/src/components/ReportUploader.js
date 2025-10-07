@@ -191,7 +191,7 @@ const ReportUploader = () => {
           'Content-Type': 'multipart/form-data'
         },
         withCredentials: false,
-        timeout: 30000
+        timeout: 120000
       });
   
       if (!data || !data.summary.keyFindings) {

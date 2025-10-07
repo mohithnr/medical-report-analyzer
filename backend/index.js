@@ -4,19 +4,18 @@ const { extractTextFromImage } = require("./utils/ocr");
 const { processHealthReportWithGemini } = require("./utils/gemini");
 const { generatePDF } = require("./utils/pdfGenerator");
 const fs = require("fs");
-const cors = require('cors');
+const cors = require("cors");
 const path = require("path");
 
 const app = express();
 
-// Configure multer with memory storage for Vercel compatibility
+// Multer memory storage for serverless compatibility
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // CORS configuration
-
 app.use(cors({
-  origin: '*',  
+  origin: '*',
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: false
@@ -24,17 +23,11 @@ app.use(cors({
 
 app.use(express.json());
 
-// Upload endpoint - modified to work with memory storage
-app.post("/upload", upload.single("file"), async (req, res) => {
+// --- Asynchronous processing helper ---
+const processReportAsync = async (fileBuffer, language) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    // Use buffer instead of file path
-    const fileBuffer = req.file.buffer;
     const extractedText = await extractTextFromImage(fileBuffer);
-    const result = await processHealthReportWithGemini(extractedText, req.body.language);
+    const result = await processHealthReportWithGemini(extractedText, language);
 
     const summaryPayload = {
       keyFindings: result.summary,
@@ -45,11 +38,31 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     const pdfBuffer = await generatePDF({ summary: summaryPayload });
 
-    res.json({
+    return {
       summary: summaryPayload,
       pdfData: pdfBuffer.toString('base64')
-    });
+    };
+  } catch (error) {
+    console.error("Error in async processing:", error);
+    throw error;
+  }
+};
 
+// --- Upload endpoint ---
+app.post("/upload", upload.single("file"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  const fileBuffer = req.file.buffer;
+  const language = req.body.language || "en";
+
+  try {
+    // Optional: respond immediately and process in background
+    // For now, let's still wait but allow long timeout on frontend
+    const result = await processReportAsync(fileBuffer, language);
+
+    res.json(result);
   } catch (error) {
     console.error("Error processing report:", error);
     res.status(500).json({
@@ -59,7 +72,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// Delete files endpoint
+// --- Delete files endpoint ---
 app.delete("/delete-files", (req, res) => {
   try {
     ['uploads', 'pdfs'].forEach(dir => {
@@ -77,16 +90,16 @@ app.delete("/delete-files", (req, res) => {
   }
 });
 
-// Error handling middleware
+// --- Error handling middleware ---
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error('Server Error:', err);
   res.status(500).json({
     error: 'Server error',
     message: err.message
   });
 });
 
-// Start server
+// --- Start server ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
