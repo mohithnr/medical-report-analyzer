@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const apiKey = 'AIzaSyCZfsorcLmb9R2S9eQUnBg_t8qj-zAykec'; // Replace with your actual API key
+const apiKey = 'AIzaSyDLuM0rvDxAKpsh1PRH488osvHRpd2kYz8'; // Replace with your actual API key
 
 const testGeminiAPI = async () => {
   try {

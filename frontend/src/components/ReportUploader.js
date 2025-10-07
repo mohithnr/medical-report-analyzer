@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-
 import { textToSpeech, cleanupAudioUrl } from '../components/Sarvam';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 import Chatbot from './Chatbot';
-
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
-
 const chunkText = (text, maxLen = 500) => {
   const chunks = [];
   let start = 0;

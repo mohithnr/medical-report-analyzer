@@ -2,17 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Initialize Gemini with API key from environment variables
 const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
-// console.log("inside chat bot",GEMINI_API_KEY);
-
 if (!GEMINI_API_KEY) {
   console.error('Gemini API key not found in environment variables');
   throw new Error('Gemini API key is required');
 }
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = await genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
 
 const Chatbot = ({ parsedSummary, isOpen, setIsOpen }) => {
   const [messages, setMessages] = useState([
@@ -81,7 +79,7 @@ const Chatbot = ({ parsedSummary, isOpen, setIsOpen }) => {
 
       const result = await chat.sendMessage([{ text: prompt }]);
       const response = result.response.text();
-
+      console.log(response);
       const updatedHistory = [...chatHistory, {
         role: "user",
         parts: userMessage

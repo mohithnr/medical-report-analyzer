@@ -20,7 +20,6 @@ async function generatePDF(data) {
          .text('Medical Report Analysis', { align: 'center' })
          .moveDown();
 
-      // Date
       doc.font('Helvetica')
          .fontSize(12)
          .text(`Generated on: ${new Date().toLocaleString()}`, { align: 'right' })

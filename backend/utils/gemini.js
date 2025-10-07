@@ -11,7 +11,7 @@ if (!GEMINI_API_KEY) {
 const processHealthReportWithGemini = async (extractedText, language) => {
   try {
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = await genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); // ✅ updated model
 
     const prompt = `
   Summarize the following medical report in ${language}. Ensure the summary includes:
@@ -41,7 +41,7 @@ const processHealthReportWithGemini = async (extractedText, language) => {
 
     const result = await model.generateContent(prompt);
     const responseContent = result?.response?.text() || "No response provided";
-
+    console.log(responseContent);
     // Parse and validate the response
     const parseResponse = (content) => {
       try {
