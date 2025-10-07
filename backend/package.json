@@ -9,5 +9,8 @@
     "pdfkit": "^0.15.2",
     "roboto-font": "^0.1.0",
     "tesseract.js": "^5.1.1"
+  },
+  "scripts": {
+    "start": "node index.js"
   }
 }
